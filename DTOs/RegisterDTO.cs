@@ -15,6 +15,11 @@ namespace BackendChat.DTOs
         public string LastName { get; set; } = string.Empty;
 
         [Required]
+        [RegularExpression(@"^[a-zA-Z][a-zA-Z0-9_.]{2,19}$", ErrorMessage = "Nickname must contain letters")]
+        [StringLength(20, ErrorMessage = "Nickname must be at least 3 characters")]
+        public string Nickname { get; set; } = string.Empty;
+
+        [Required]
         [DataType(DataType.DateTime)]
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime DOB { get; set; }

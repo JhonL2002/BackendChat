@@ -19,8 +19,12 @@ namespace BackendChat.Data
                 .UseIdentityColumn()
                 .ValueGeneratedOnAdd();
 
+                tb.HasIndex(col => col.Nickname)
+                  .IsUnique();
+
                 tb.Property(col => col.FirstName).HasMaxLength(50);
                 tb.Property(col => col.LastName).HasMaxLength(50);
+                tb.Property(col => col.Nickname).HasMaxLength(20);
                 tb.Property(col => col.Password).HasMaxLength(100);
                 tb.Property(col => col.Email).HasMaxLength(50);
             });
