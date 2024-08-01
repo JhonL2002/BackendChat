@@ -30,8 +30,12 @@ namespace BackendChat.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> OnLogin(LoginDTO model)
         {
-            await _accountService.LoginAsync(model);
-            return Ok(model);
+            var token = await _accountService.LoginAsync(model);
+            if (token == null)
+            {
+                return Unauthorized();
+            }
+            return Ok(new { Token = token});
         }
 
         [HttpPost("refresh-token")]

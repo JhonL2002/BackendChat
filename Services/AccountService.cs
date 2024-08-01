@@ -46,21 +46,24 @@ namespace BackendChat.Services
             _logger.LogInformation("**** Success: User created successfully! ****");
         }
 
-        public async Task LoginAsync(LoginDTO model)
+        public async Task<string?> LoginAsync(LoginDTO model)
         {
             var finduser = await GetUser(model.Email);
             if (finduser == null)
             {
                 _logger.LogError("**** User not found! ****");
+                return null;
             }
 
             if (!BCrypt.Net.BCrypt.Verify(model.Password, finduser.Password))
             {
                 _logger.LogError("**** Email/Password invalid! ****");
+                return null;
             }
 
             string jwtToken = GenerateToken(finduser);
             _logger.LogInformation($"**** Login Succesfully **** {jwtToken}");
+            return jwtToken;
         }
 
         private string GenerateToken(AppUser user)
