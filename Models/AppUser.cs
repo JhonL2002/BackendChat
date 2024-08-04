@@ -19,14 +19,8 @@ namespace BackendChat.Models
 
         public string Password { get; set; } = string.Empty;
 
-        //Calculated property
-        public string FullName
-        {
-            get
-            {
-                return LastName + ", " + FirstName;
-            }
-        }
+        [NotMapped]
+        public string FullName {  get; set; } = string.Empty;
 
 
     }

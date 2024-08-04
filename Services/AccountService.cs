@@ -1,6 +1,7 @@
 ﻿using BackendChat.Data;
 using BackendChat.DTOs;
 using BackendChat.Models;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client;
@@ -68,11 +69,12 @@ namespace BackendChat.Services
 
         private string GenerateToken(AppUser user)
         {
+            user.FullName = $"{user.LastName}"+" "+$"{user.FirstName}";
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Chat:JwtKey"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var userClaims = new[]
             {
-                new Claim(ClaimTypes.Name, user.FirstName),
+                new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.NameIdentifier, user.Nickname)
             };
