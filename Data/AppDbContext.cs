@@ -27,6 +27,7 @@ namespace BackendChat.Data
                 tb.Property(col => col.Nickname).HasMaxLength(20);
                 tb.Property(col => col.Password).HasMaxLength(100);
                 tb.Property(col => col.Email).HasMaxLength(50);
+                tb.Property(col => col.ProfilePictureUrl).IsRequired(true);
             });
 
             modelBuilder.Entity<AppUser>().ToTable("User");

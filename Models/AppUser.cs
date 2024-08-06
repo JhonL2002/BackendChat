@@ -19,6 +19,8 @@ namespace BackendChat.Models
 
         public string Password { get; set; } = string.Empty;
 
+        public string? ProfilePictureUrl { get; set; } = string.Empty;
+
         [NotMapped]
         public string FullName {  get; set; } = string.Empty;
 

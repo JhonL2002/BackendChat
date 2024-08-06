@@ -32,6 +32,9 @@ namespace BackendChat.DTOs
         [DataType(DataType.Password)]
         public string Password { get; set; } = string.Empty;
 
+        public IFormFile? ProfilePicture { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+
         [Required]
         [Compare(nameof(Password)), DataType(DataType.Password)]
         public string ConfirmPassword { get; set; } = string.Empty;
