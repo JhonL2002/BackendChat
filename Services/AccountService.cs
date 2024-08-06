@@ -1,6 +1,7 @@
 ﻿using BackendChat.Data;
 using BackendChat.DTOs;
 using BackendChat.Models;
+using BackendChat.Services.BlobStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,11 +18,17 @@ namespace BackendChat.Services
         private readonly AppDbContext _appDbContext;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AccountService> _logger;
-        public AccountService(AppDbContext appDbContext ,IConfiguration configuration, ILogger<AccountService> logger)
+        private readonly BlobImageService _blobService;
+        public AccountService(AppDbContext appDbContext,
+            IConfiguration configuration,
+            ILogger<AccountService> logger,
+            BlobImageService blobService
+        )
         {
             _appDbContext = appDbContext;
             _configuration = configuration;
             _logger = logger;
+            _blobService = blobService;
         }
 
         public async Task RegisterAsync(RegisterDTO model)
@@ -32,6 +39,9 @@ namespace BackendChat.Services
                 _logger.LogWarning("User already exists");
             }
 
+            //Put a default URL image if not exists
+            var defaultImageUrl = _blobService.GetDefaultImageUrl();
+
             _appDbContext.Users.Add(
                 new AppUser()
                 {
@@ -40,7 +50,8 @@ namespace BackendChat.Services
                     Nickname = model.Nickname,
                     Email = model.Email,
                     DOB = model.DOB,
-                    Password = BCrypt.Net.BCrypt.HashPassword(model.Password)
+                    Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
+                    ProfilePictureUrl = model.ProfilePictureUrl
                 });
 
             await _appDbContext.SaveChangesAsync();

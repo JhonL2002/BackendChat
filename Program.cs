@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using BackendChat.Services.BlobStorage;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,7 @@ var connection = conStrBuilder.ConnectionString;
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<BlobImageService>();
 
 //Configure the JWT authentication
 builder.Services.AddAuthentication(options =>

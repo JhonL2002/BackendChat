@@ -1,6 +1,7 @@
 ﻿using BackendChat.DTOs;
 using BackendChat.Models;
 using BackendChat.Services;
+using BackendChat.Services.BlobStorage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,16 +13,30 @@ namespace BackendChat.Controllers
     public class AccountController : ControllerBase
     {
         private readonly AccountService _accountService;
+        private readonly BlobImageService _blobService;
 
-        public AccountController(AccountService accountService)
+        public AccountController(AccountService accountService, BlobImageService blobImageService)
         {
             _accountService = accountService;
+            _blobService = blobImageService;
         }
 
         [HttpPost("register")]
         [AllowAnonymous]
-        public async Task<IActionResult> OnRegister(RegisterDTO model)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> OnRegister([FromForm] RegisterDTO model)
         {
+            if (model.ProfilePicture != null)
+            {
+                //Upload an image and get the url
+                var imageUrl = await _blobService.UploadProfileImageAsync(model.ProfilePicture);
+                model.ProfilePictureUrl = imageUrl;
+            }
+            else
+            {
+                //Assign a default image
+                model.ProfilePictureUrl = _blobService.GetDefaultImageUrl();
+            }
             await _accountService.RegisterAsync(model);
             return Ok(model);
         }
