@@ -1,5 +1,6 @@
 ﻿using BackendChat.DTOs;
 using BackendChat.Models;
+using BackendChat.Responses;
 using BackendChat.Services;
 using BackendChat.Services.BlobStorage;
 using Microsoft.AspNetCore.Authorization;
@@ -38,7 +39,12 @@ namespace BackendChat.Controllers
                 model.ProfilePictureUrl = _blobService.GetDefaultImageUrl();
             }
             await _accountService.RegisterAsync(model);
-            return Ok(model);
+
+            var response = new RegisterResponse
+            {
+                ProfilePictureUrl = model.ProfilePictureUrl,
+            };
+            return Ok(response);
         }
 
         [HttpPost("login")]

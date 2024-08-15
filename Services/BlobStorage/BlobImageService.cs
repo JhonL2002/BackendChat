@@ -5,11 +5,13 @@ namespace BackendChat.Services.BlobStorage
     public class BlobImageService
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<BlobImageService> _logger;
         private readonly string[] permittedExtensions = { ".jpg", ".jpeg", ".png" };
         private readonly string[] permittedMimeTypes = { "image/jpeg", "image/png" };
-        public BlobImageService(IConfiguration configuration)
+        public BlobImageService(IConfiguration configuration, ILogger<BlobImageService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         public async Task<string> UploadProfileImageAsync(IFormFile imageStream)
@@ -22,16 +24,21 @@ namespace BackendChat.Services.BlobStorage
 
             //Validate file extension
             var extension = Path.GetExtension(imageStream.FileName).ToLowerInvariant();
-            if (Array.IndexOf(permittedExtensions, extension) < 0)
+            if (string.IsNullOrEmpty(imageStream.ContentType) || !permittedMimeTypes.Contains(imageStream.ContentType))
             {
-                throw new InvalidOperationException("Invalid file extension. Only .jpg, .jpeg, and .png are allowed.");
+                if (Array.IndexOf(permittedExtensions, extension) < 0)
+                {
+                    throw new InvalidOperationException("Invalid file extension. Only .jpg, .jpeg, and .png are allowed.");
+                }
             }
 
             //Validate file MIME type
-            if (!permittedMimeTypes.Contains(imageStream.ContentType))
+            /*if (!permittedMimeTypes.Contains(imageStream.ContentType))
             {
+                _logger.LogInformation($"File extension: {extension}");
+                _logger.LogInformation($"MIME type: {imageStream.ContentType}");
                 throw new InvalidOperationException("Invalid file type. Only JPEG and PNG are allowed.");
-            }
+            }*/
 
             //Validate image size (200 KB = 204800 bytes)
             if (imageStream.Length > 204800)
