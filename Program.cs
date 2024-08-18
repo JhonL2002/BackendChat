@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BackendChat.Services.BlobStorage;
+using BackendChat.Services.EmailSender;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,7 @@ var connection = conStrBuilder.ConnectionString;
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<BlobImageService>();
 

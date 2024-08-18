@@ -2,10 +2,8 @@
 using BackendChat.DTOs;
 using BackendChat.Models;
 using BackendChat.Services.BlobStorage;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
+using BackendChat.Services.EmailSender;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -19,16 +17,19 @@ namespace BackendChat.Services
         private readonly IConfiguration _configuration;
         private readonly ILogger<AccountService> _logger;
         private readonly BlobImageService _blobService;
+        private readonly EmailService _emailservice;
         public AccountService(AppDbContext appDbContext,
             IConfiguration configuration,
             ILogger<AccountService> logger,
-            BlobImageService blobService
+            BlobImageService blobService,
+            EmailService emailService
         )
         {
             _appDbContext = appDbContext;
             _configuration = configuration;
             _logger = logger;
             _blobService = blobService;
+            _emailservice = emailService;
         }
 
         public async Task RegisterAsync(RegisterDTO model)
@@ -40,7 +41,8 @@ namespace BackendChat.Services
             }
 
             //Put a default URL image if not exists
-            var defaultImageUrl = _blobService.GetDefaultImageUrl();
+            _blobService.GetDefaultImageUrl();
+            model.EmailConfirmationToken = GenerateEmailConfirmationToken();
 
             _appDbContext.Users.Add(
                 new AppUser()
@@ -51,11 +53,69 @@ namespace BackendChat.Services
                     Email = model.Email,
                     DOB = model.DOB,
                     Password = BCrypt.Net.BCrypt.HashPassword(model.Password),
-                    ProfilePictureUrl = model.ProfilePictureUrl
+                    ProfilePictureUrl = model.ProfilePictureUrl,
+                    EmailConfirmationToken = model.EmailConfirmationToken,
                 });
-
             await _appDbContext.SaveChangesAsync();
+            await SendConfirmationEmailAsync(model);
             _logger.LogInformation("**** Success: User created successfully! ****");
+        }
+
+        public async Task UpdateAfterRegisterAsync(int id, AppUser model)
+        {
+            var user = await _appDbContext.Users.FindAsync(id);
+            if (user == null)
+            {
+                _logger.LogWarning("User not found");
+            }
+
+            user.EmailConfirmed = model.EmailConfirmed;
+            user.EmailConfirmationToken = model.EmailConfirmationToken;
+
+            _appDbContext.Users.Update(user);
+            await _appDbContext.SaveChangesAsync();
+        }
+
+        public async Task UpdateAsync(int id, UpdateUserDto model)
+        {
+            var user = await _appDbContext.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                _logger.LogWarning("User not found");
+            }
+
+            user.FirstName = model.FirstName;
+            user.LastName = model.LastName;
+            user.Nickname = model.Nickname;
+            user.DOB = model.DOB;
+
+            if (model.ProfilePicture != null)
+            {
+                var profilePictureUrl = await _blobService.UploadProfileImageAsync(model.ProfilePicture);
+
+                //Put delete picture profile method here if is necessary!!
+
+                user.ProfilePictureUrl = profilePictureUrl;
+            }
+
+            _appDbContext.Users.Update(user);
+            await _appDbContext.SaveChangesAsync();
+            _logger.LogInformation("User updated successfully!");
+        }
+
+        /*public async Task<AppUser?> GetUserByIdAsync(int id)
+        {
+            return await _appDbContext.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == id);
+        }*/
+
+        public async Task<AppUser?> GetUserByNicknameAsync(string nickName)
+        {
+            return await _appDbContext.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Nickname == nickName);
         }
 
         public async Task<string?> LoginAsync(LoginDTO model)
@@ -70,6 +130,12 @@ namespace BackendChat.Services
             if (!BCrypt.Net.BCrypt.Verify(model.Password, finduser.Password))
             {
                 _logger.LogError("**** Email/Password invalid! ****");
+                return null;
+            }
+
+            if (!finduser.EmailConfirmed)
+            {
+                _logger.LogError("**** Email not confirmed! ****");
                 return null;
             }
 
@@ -112,6 +178,17 @@ namespace BackendChat.Services
             _logger.LogInformation($"**** New token: {newToken} ****");
         }
 
+        public async Task SendConfirmationEmailAsync(RegisterDTO user)
+        {
+            var baseUrl = _configuration["AppSettings:BaseUrl"];
+            var encodedToken = Uri.EscapeDataString(user.EmailConfirmationToken);
+            var confirmationLink = $"{baseUrl}/confirm-email?userNickname={user.Nickname}&token={encodedToken}";
+            string message = $"Please, confirm your account here {confirmationLink}";
+            await _emailservice.SendEmailAsync(_configuration["EmailCredentials:FromEmail"]!, user.Email, "Confirm your email", message);
+
+        }
+
         private async Task<AppUser> GetUser(string email) => await _appDbContext.Users.FirstOrDefaultAsync(e => e.Email == email);
+        public string GenerateEmailConfirmationToken() => Guid.NewGuid().ToString();
     }
 }
