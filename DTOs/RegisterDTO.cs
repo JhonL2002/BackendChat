@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace BackendChat.DTOs
 {
@@ -38,5 +39,9 @@ namespace BackendChat.DTOs
         [Required]
         [Compare(nameof(Password)), DataType(DataType.Password)]
         public string ConfirmPassword { get; set; } = string.Empty;
+
+        public bool? EmailConfirmed { get; set; }
+
+        public string? EmailConfirmationToken { get; set; } = string.Empty;
     }
 }

@@ -21,6 +21,10 @@ namespace BackendChat.Models
 
         public string? ProfilePictureUrl { get; set; } = string.Empty;
 
+        public bool EmailConfirmed { get; set; }
+
+        public string? EmailConfirmationToken {  get; set; } = string.Empty;
+
         [NotMapped]
         public string FullName {  get; set; } = string.Empty;
 
