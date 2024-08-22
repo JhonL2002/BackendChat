@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BackendChat.Services.BlobStorage;
 using BackendChat.Services.EmailSender;
+using BackendChat.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,9 +30,11 @@ var connection = conStrBuilder.ConnectionString;
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<BlobImageService>();
+builder.Services.AddScoped<BlobMediaService>();
 
 //Configure the JWT authentication
 builder.Services.AddAuthentication(options =>
@@ -83,5 +86,6 @@ app.UseAuthorization();
 
 
 app.MapControllers();
+app.MapHub<ChatHub>("/chathub");
 
 app.Run();
