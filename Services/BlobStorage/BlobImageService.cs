@@ -5,13 +5,11 @@ namespace BackendChat.Services.BlobStorage
     public class BlobImageService
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<BlobImageService> _logger;
-        private readonly string[] permittedExtensions = { ".jpg", ".jpeg", ".png" };
-        private readonly string[] permittedMimeTypes = { "image/jpeg", "image/png" };
-        public BlobImageService(IConfiguration configuration, ILogger<BlobImageService> logger)
+        private readonly string[] permittedExtensionsToProfile = { ".jpg", ".jpeg", ".png" };
+        private readonly string[] permittedMimeTypesToProfile = { "image/jpeg", "image/png" };
+        public BlobImageService(IConfiguration configuration)
         {
             _configuration = configuration;
-            _logger = logger;
         }
 
         public async Task<string> UploadProfileImageAsync(IFormFile imageStream)
@@ -24,9 +22,9 @@ namespace BackendChat.Services.BlobStorage
 
             //Validate file extension
             var extension = Path.GetExtension(imageStream.FileName).ToLowerInvariant();
-            if (string.IsNullOrEmpty(imageStream.ContentType) || !permittedMimeTypes.Contains(imageStream.ContentType))
+            if (string.IsNullOrEmpty(imageStream.ContentType) || !permittedMimeTypesToProfile.Contains(imageStream.ContentType))
             {
-                if (Array.IndexOf(permittedExtensions, extension) < 0)
+                if (Array.IndexOf(permittedExtensionsToProfile, extension) < 0)
                 {
                     throw new InvalidOperationException("Invalid file extension. Only .jpg, .jpeg, and .png are allowed.");
                 }
