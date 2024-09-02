@@ -29,5 +29,13 @@ namespace BackendChat.Models
         public string FullName {  get; set; } = string.Empty;
 
 
+        //An user can send many messages, but each message belongs to unique user
+        public ICollection<ChatMessage> ChatMessages { get; set; }
+
+
+        //An user can participate in many chats
+        public ICollection<ChatParticipant> ChatParticipants { get; set; }
+
+
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using BackendChat.Services.BlobStorage;
 using BackendChat.Services.EmailSender;
 using BackendChat.Hubs;
+using BackendChat.Services.ChatServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,12 @@ var connection = conStrBuilder.ConnectionString;
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<ChatMessageService>();
+builder.Services.AddScoped<ManageGroupService>();
+builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<BlobImageService>();
 builder.Services.AddScoped<BlobMediaService>();
 
@@ -40,12 +45,7 @@ builder.Services.AddScoped<BlobMediaService>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-{
-    options.LoginPath = new PathString("/login");
-    options.LogoutPath = new PathString("/logout");
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {

@@ -1,8 +1,10 @@
 ﻿using BackendChat.DTOs;
+using BackendChat.DTOs.Chats;
 using BackendChat.Hubs;
+using BackendChat.Models;
 using BackendChat.Responses;
-using BackendChat.Services;
 using BackendChat.Services.BlobStorage;
+using BackendChat.Services.ChatServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,46 +16,93 @@ namespace BackendChat.Controllers
     [ApiController]
     public class ChatController : ControllerBase
     {
-        private readonly IHubContext<ChatHub> _hubContext;
+        private readonly ChatMessageService _chatMessageService;
+        private readonly ManageGroupService _manageGroupService;
+        private readonly UserContextService _userContextService;
         private readonly BlobMediaService _blobMediaService;
 
-        public ChatController(IHubContext<ChatHub> hubContext, BlobMediaService blobMediaService)
+        public ChatController(
+            ChatMessageService chatMessageService,
+            ManageGroupService manageGroupService,
+            UserContextService userContextService,
+            BlobMediaService blobMediaService
+        )
         {
-            _hubContext = hubContext;
+            _chatMessageService = chatMessageService;
+            _manageGroupService = manageGroupService;
+            _userContextService = userContextService;
             _blobMediaService = blobMediaService;
         }
 
-        [HttpPost("send")]
-        [AllowAnonymous]
-        public async Task<IActionResult> SendMessage([FromBody] ChatMessage message)
-        {
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", message.User, message.Text);
-            return Ok(new { Status = "Message sent" });
-        }
-
-        [HttpPost("sendmedia")]
+        //Send a chat with permmitted mediafiles
+        [HttpPost("send-message")]
         [Consumes("multipart/form-data")]
-        [AllowAnonymous]
-        public async Task<IActionResult> SendMedia([FromForm] ChatMedia message)
+        [Authorize]
+        public async Task<IActionResult> SendMessage([FromForm] ChatMessageDTO message)
         {
-            if (message.File != null)
+            await _chatMessageService.RegisterMessageAsync(message);
+            var response = new MessageResponse
             {
-                //Upload an image and get the url
-                var imageUrl = await _blobMediaService.UploadMediaAsync(message.File);
-                message.MediaUrl = imageUrl;
-            }
-            else
-            {
-                return BadRequest("Please put a valid file!");
-            }
-            await _hubContext.Clients.All.SendAsync("ReceiveMedia", message.User, message.MediaUrl);
-            var response = new ChatMediaResponse
-            {
-                MediaUrl = message.MediaUrl,
-                User = message.User
-                
+                MediaUrl = message.MediaUrl
             };
             return Ok(response);
+        }
+
+        //Get all groups
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<Chat>>> GetAllGroups()
+        {
+            var groups = await _manageGroupService.GetAllGroupsAsync();
+            return Ok(groups);
+        }
+
+        //Get a group by Id
+        [HttpGet("{id}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<Chat>> GetGroupById(int id)
+        {
+            var group = await _manageGroupService.GetGroupByIdAsync(id);
+
+            if (group == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(group);
+        }
+
+        [HttpPost("create-group")]
+        [Authorize]
+        public async Task<IActionResult> CreateGroup([FromBody] GroupDTO model)
+        {
+            var create = await _manageGroupService.CreateGroupAsync(model);
+            return Ok(create);
+        }
+
+        [HttpGet("user-chats")]
+        [Authorize]
+        public async Task<ActionResult<List<ChatDto>>> GetUserChats()
+        {
+            var getChats = await _userContextService.GetUserChatsAsync();
+            return Ok(getChats);
+        }
+
+        [HttpGet("{chatId}/messages")]
+        [Authorize]
+        public async Task<ActionResult<List<ChatMediaResponse>>> GetMessages(int chatId)
+        {
+            try
+            {
+                var getChats = await _chatMessageService.GetMessagesWithUpdatedSaSUrlsAsync(chatId);
+                return Ok(getChats);
+            }
+            catch (Exception ex)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex.Message, "Failed to get messages with updated SAS Urls");
+                return StatusCode(500, "Internal Server Error");
+            }
         }
     }
 }

@@ -56,6 +56,22 @@ namespace BackendChat.Services.BlobStorage
             return sasUri.ToString();
         }
 
+        //New method to regenerate SAS URL
+        public async Task<string> RegenerateSasUri(string blobName)
+        {
+            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
+            BlobClient blobClient = containerClient.GetBlobClient(blobName);
+
+            if (await blobClient.ExistsAsync())
+            {
+                //Create new SAS URI with readonly permissions
+                var sasUri = GenerateBlobSasUri(blobClient, TimeSpan.FromHours(1));
+                return sasUri;
+            }
+            throw new InvalidOperationException("Blob not found.");
+        }
+
         private string GenerateBlobSasUri(BlobClient blobClient, TimeSpan duration)
         {
             //Define SAS permissions and expiry time
