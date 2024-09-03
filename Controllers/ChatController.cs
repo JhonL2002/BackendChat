@@ -19,19 +19,16 @@ namespace BackendChat.Controllers
         private readonly ChatMessageService _chatMessageService;
         private readonly ManageGroupService _manageGroupService;
         private readonly UserContextService _userContextService;
-        private readonly BlobMediaService _blobMediaService;
 
         public ChatController(
             ChatMessageService chatMessageService,
             ManageGroupService manageGroupService,
-            UserContextService userContextService,
-            BlobMediaService blobMediaService
+            UserContextService userContextService
         )
         {
             _chatMessageService = chatMessageService;
             _manageGroupService = manageGroupService;
             _userContextService = userContextService;
-            _blobMediaService = blobMediaService;
         }
 
         //Send a chat with permmitted mediafiles
@@ -72,6 +69,7 @@ namespace BackendChat.Controllers
             return Ok(group);
         }
 
+        //Create a group in chat
         [HttpPost("create-group")]
         [Authorize]
         public async Task<IActionResult> CreateGroup([FromBody] GroupDTO model)
@@ -80,6 +78,7 @@ namespace BackendChat.Controllers
             return Ok(create);
         }
 
+        //Get the user chats
         [HttpGet("user-chats")]
         [Authorize]
         public async Task<ActionResult<List<ChatDto>>> GetUserChats()
@@ -88,13 +87,14 @@ namespace BackendChat.Controllers
             return Ok(getChats);
         }
 
+        //Get the messages from a chat
         [HttpGet("{chatId}/messages")]
         [Authorize]
-        public async Task<ActionResult<List<ChatMediaResponse>>> GetMessages(int chatId)
+        public async Task<ActionResult<List<ChatMediaResponse>>> GetMessages(int chatId, [FromQuery] int? lastMessageId)
         {
             try
             {
-                var getChats = await _chatMessageService.GetMessagesWithUpdatedSaSUrlsAsync(chatId);
+                var getChats = await _chatMessageService.GetMessagesWithUpdatedSaSUrlsAsync(chatId, lastMessageId);
                 return Ok(getChats);
             }
             catch (Exception ex)
