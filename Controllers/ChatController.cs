@@ -46,7 +46,7 @@ namespace BackendChat.Controllers
         }
 
         //Get all groups
-        [HttpGet]
+        [HttpGet("get-groups")]
         [AllowAnonymous]
         public async Task<ActionResult<List<Chat>>> GetAllGroups()
         {

@@ -1,6 +1,7 @@
 ﻿using BackendChat.Data;
 using BackendChat.DTOs.Chats;
 using BackendChat.Models;
+using BackendChat.Responses;
 using Microsoft.EntityFrameworkCore;
 using System.Net.WebSockets;
 using System.Security.Claims;
@@ -65,13 +66,17 @@ namespace BackendChat.Services.ChatServices
         }
 
         //Get all groups
-        public async Task<List<Chat>> GetAllGroupsAsync()
+        public async Task<List<GroupResponse>> GetAllGroupsAsync()
         {
-            var chats = _appDbContext.Chats
+            var chats = await _appDbContext.Chats
                 .Where(c => c.ChatTypeId == (int)ChatTypeEnum.Group)
+                .Select( c=> new GroupResponse
+                {
+                    ChatId = c.ChatId,
+                    ChatName = c.ChatName
+                })
                 .ToListAsync();
-
-            return await chats;
+            return chats;
         }
 
         //Get a group by id
