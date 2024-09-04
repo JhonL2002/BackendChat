@@ -65,20 +65,6 @@ namespace BackendChat.Services.ChatServices
             await _appDbContext.SaveChangesAsync();
         }
 
-        //Get all groups
-        public async Task<List<GroupResponse>> GetAllGroupsAsync()
-        {
-            var chats = await _appDbContext.Chats
-                .Where(c => c.ChatTypeId == (int)ChatTypeEnum.Group)
-                .Select( c=> new GroupResponse
-                {
-                    ChatId = c.ChatId,
-                    ChatName = c.ChatName
-                })
-                .ToListAsync();
-            return chats;
-        }
-
         //Get a group by id
         public async Task<Chat> GetGroupByIdAsync(int groupId)
         {

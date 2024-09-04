@@ -47,26 +47,11 @@ namespace BackendChat.Controllers
 
         //Get all groups
         [HttpGet("get-groups")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<ActionResult<List<Chat>>> GetAllGroups()
         {
-            var groups = await _manageGroupService.GetAllGroupsAsync();
+            var groups = await _userContextService.GetAllGroupsAsync();
             return Ok(groups);
-        }
-
-        //Get a group by Id
-        [HttpGet("{id}")]
-        [AllowAnonymous]
-        public async Task<ActionResult<Chat>> GetGroupById(int id)
-        {
-            var group = await _manageGroupService.GetGroupByIdAsync(id);
-
-            if (group == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(group);
         }
 
         //Create a group in chat
@@ -76,6 +61,15 @@ namespace BackendChat.Controllers
         {
             var create = await _manageGroupService.CreateGroupAsync(model);
             return Ok(create);
+        }
+
+        //Join a user in a group
+        [HttpPost("join-group")]
+        [Authorize]
+        public async Task<IActionResult> JoinUserToGroup(int chatId)
+        {
+            await _userContextService.AddChatParticipantToGroupAsync(chatId);
+            return Ok();
         }
 
         //Get the user chats
