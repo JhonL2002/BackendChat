@@ -1,14 +1,10 @@
 ﻿using BackendChat.DTOs;
 using BackendChat.DTOs.Chats;
-using BackendChat.Hubs;
 using BackendChat.Models;
 using BackendChat.Responses;
-using BackendChat.Services.BlobStorage;
 using BackendChat.Services.ChatServices;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
 
 namespace BackendChat.Controllers
 {
