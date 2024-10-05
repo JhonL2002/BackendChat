@@ -12,6 +12,8 @@ using BackendChat.Repositories;
 using BackendChat.Services.Interfaces;
 using BackendChat.Services.MailJet;
 using BackendChat.Services.SendEmail;
+using BackendChat.Helpers.Interfaces;
+using BackendChat.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +40,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IMailJet, MailJet>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
+builder.Services.AddScoped<ILoginRepository,  LoginRepository>();
+builder.Services.AddScoped<IAdminTokenCode, AdminTokenCode>();
 //builder.Services.AddScoped<ChatMessageService>();
 builder.Services.AddScoped<ManageGroupService>();
 builder.Services.AddScoped<UserContextService>();

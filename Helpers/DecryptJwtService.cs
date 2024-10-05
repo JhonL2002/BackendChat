@@ -2,11 +2,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
-namespace BackendChat.Services
+namespace BackendChat.Helpers
 {
     public static class DecryptJwtService
     {
-        public static CustomUserClaims DecryptToken (string jwtToken)
+        public static CustomUserClaims DecryptToken(string jwtToken)
         {
             try
             {

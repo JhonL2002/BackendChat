@@ -20,12 +20,18 @@ namespace BackendChat.Controllers
         private readonly IUserRepository _userRepository;
         private readonly IBlobImageService _blobService;
         private readonly ILogger<AccountController> _logger;
+        private readonly ILoginRepository _loginRepository;
 
-        public AccountController(IUserRepository userRepository, IBlobImageService blobImageService, ILogger<AccountController> logger)
+        public AccountController(
+            IUserRepository userRepository,
+            IBlobImageService blobImageService,
+            ILogger<AccountController> logger,
+            ILoginRepository loginRepository)
         {
             _userRepository = userRepository;
             _blobService = blobImageService;
             _logger = logger;
+            _loginRepository = loginRepository;
         }
 
         [HttpPost("register")]
@@ -68,7 +74,8 @@ namespace BackendChat.Controllers
             var user = await _userRepository.GetUserByNicknameAsync(userNickname);
             if (user == null || user.EmailConfirmationToken != token)
             {
-                return BadRequest("Invalid confirmation token");
+                var failureResponse = new FailureResponse("Invalid confirmation token");
+                return BadRequest(failureResponse);
             }
 
             await _userRepository.SetConfirmationEmailAsync(user.Id, user);
@@ -95,25 +102,30 @@ namespace BackendChat.Controllers
 
             await _accountService.UpdateAsync(id, model);
             return NoContent();
-        }
+        }*/
 
         [HttpPost("login")]
         [AllowAnonymous]
+        [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(FailureResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> OnLogin(LoginDTO model)
         {
-            var token = await _accountService.LoginAsync(model);
+            var token = await _loginRepository.LoginAsync(model);
             if (token == null)
             {
-                return Unauthorized();
+                var failureResponse = new FailureResponse("Unauthorized access, please verify credentials");
+                return Unauthorized(failureResponse);
             }
-            return Ok(new { Token = token});
+            var successResponse = new SuccessResponse("Loged in successfully!");
+            return Ok(successResponse);
         }
 
-        [HttpPost("refresh-token")]
+        /*[HttpPost("refresh-token")]
         [AllowAnonymous]
         public IActionResult RefreshToken (UserSession model)
         {
-            _accountService.RefreshToken(model);
+            _loginRepository.RefreshToken(model);
             return Ok(model);
         }*/
     }
