@@ -1,15 +1,17 @@
 using BackendChat.Data;
-using BackendChat.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using BackendChat.Services.BlobStorage;
-using BackendChat.Services.EmailSender;
 using BackendChat.Hubs;
 using BackendChat.Services.ChatServices;
+using BackendChat.Repositories.Interfaces;
+using BackendChat.Repositories;
+using BackendChat.Services.Interfaces;
+using BackendChat.Services.MailJet;
+using BackendChat.Services.SendEmail;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,12 +35,13 @@ var connection = conStrBuilder.ConnectionString;
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<EmailService>();
-builder.Services.AddScoped<AccountService>();
-builder.Services.AddScoped<ChatMessageService>();
+builder.Services.AddScoped<IMailJet, MailJet>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISendEmailService, SendEmailService>();
+//builder.Services.AddScoped<ChatMessageService>();
 builder.Services.AddScoped<ManageGroupService>();
 builder.Services.AddScoped<UserContextService>();
-builder.Services.AddScoped<BlobImageService>();
+builder.Services.AddScoped<IBlobImageService, BlobImageService>();
 builder.Services.AddScoped<BlobMediaService>();
 
 //Configure the JWT authentication

@@ -1,8 +1,9 @@
 ﻿using Azure.Storage.Blobs;
+using BackendChat.Services.Interfaces;
 
 namespace BackendChat.Services.BlobStorage
 {
-    public class BlobImageService
+    public class BlobImageService : IBlobImageService
     {
         private readonly IConfiguration _configuration;
         private readonly string[] permittedExtensionsToProfile = { ".jpg", ".jpeg", ".png" };
@@ -30,14 +31,6 @@ namespace BackendChat.Services.BlobStorage
                 }
             }
 
-            //Validate file MIME type
-            /*if (!permittedMimeTypes.Contains(imageStream.ContentType))
-            {
-                _logger.LogInformation($"File extension: {extension}");
-                _logger.LogInformation($"MIME type: {imageStream.ContentType}");
-                throw new InvalidOperationException("Invalid file type. Only JPEG and PNG are allowed.");
-            }*/
-
             //Validate image size (200 KB = 204800 bytes)
             if (imageStream.Length > 204800)
             {
@@ -55,26 +48,6 @@ namespace BackendChat.Services.BlobStorage
             }
 
             return blobClient.Uri.ToString();
-        }
-
-        public async Task<Stream> GetProfileImage(string userId)
-        {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
-
-            string blobName = $"{userId}.jpg";
-            BlobClient blobClient = containerClient.GetBlobClient(blobName);
-
-            if (await blobClient.ExistsAsync())
-            {
-                return await blobClient.OpenReadAsync();
-            }
-            else
-            {
-                //Return the default image if the user does not have a profile image
-                BlobClient defaultBlobClient = containerClient.GetBlobClient(_configuration["AzureBlob:DefaultImage"]);
-                return await defaultBlobClient.OpenReadAsync();
-            }
         }
 
         public string GetDefaultImageUrl()

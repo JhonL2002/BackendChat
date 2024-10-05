@@ -1,15 +1,16 @@
-﻿using Mailjet.Client;
+﻿using BackendChat.Services.Interfaces;
+using Mailjet.Client;
 using Mailjet.Client.Resources;
 using Newtonsoft.Json.Linq;
 
-namespace BackendChat.Services.EmailSender
+namespace BackendChat.Services.MailJet
 {
-    public class EmailService
+    public class MailJet : IMailJet
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<EmailService> _logger;
+        private readonly ILogger<IMailJet> _logger;
 
-        public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+        public MailJet(IConfiguration configuration, ILogger<IMailJet> logger)
         {
             _configuration = configuration;
             _logger = logger;

@@ -1,8 +1,11 @@
 ﻿using BackendChat.DTOs;
 using BackendChat.Models;
+using BackendChat.Repositories.Interfaces;
 using BackendChat.Responses;
+using BackendChat.Responses.BackendChat.Responses;
 using BackendChat.Services;
 using BackendChat.Services.BlobStorage;
+using BackendChat.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,13 +17,13 @@ namespace BackendChat.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private readonly AccountService _accountService;
-        private readonly BlobImageService _blobService;
+        private readonly IUserRepository _userRepository;
+        private readonly IBlobImageService _blobService;
         private readonly ILogger<AccountController> _logger;
 
-        public AccountController(AccountService accountService, BlobImageService blobImageService, ILogger<AccountController> logger)
+        public AccountController(IUserRepository userRepository, IBlobImageService blobImageService, ILogger<AccountController> logger)
         {
-            _accountService = accountService;
+            _userRepository = userRepository;
             _blobService = blobImageService;
             _logger = logger;
         }
@@ -28,47 +31,53 @@ namespace BackendChat.Controllers
         [HttpPost("register")]
         [AllowAnonymous]
         [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> OnRegister([FromForm] RegisterDTO model)
         {
-            if (model.ProfilePicture != null)
+            try
             {
-                //Upload an image and get the url
-                var imageUrl = await _blobService.UploadProfileImageAsync(model.ProfilePicture);
-                model.ProfilePictureUrl = imageUrl;
+                await _userRepository.RegisterAsync(model);
+                var response = new RegisterResponse
+                {
+                    ProfilePictureUrl = model.ProfilePictureUrl,
+                    Token = model.EmailConfirmationToken
+                };
+                return Ok(response);
             }
-            else
+            catch(InvalidOperationException ex)
             {
-                //Assign a default image
-                model.ProfilePictureUrl = _blobService.GetDefaultImageUrl();
+                return BadRequest(new { message = ex.Message });
             }
-            await _accountService.RegisterAsync(model);
-            var response = new RegisterResponse
+            catch (Exception ex)
             {
-                ProfilePictureUrl = model.ProfilePictureUrl,
-                Token = model.EmailConfirmationToken
-            };
-            return Ok(response);
+                _logger.LogError(ex, "An error occurred while registering the user.");
+                return StatusCode(500, "Internal server error.");
+            }
+            
         }
 
         [HttpPost("confirm-email")]
         [AllowAnonymous]
+        [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ConfirmEmail(string userNickname, string token, ConfirmEmailDto model)
         {
-            var user = await _accountService.GetUserByNicknameAsync(userNickname);
+            var user = await _userRepository.GetUserByNicknameAsync(userNickname);
             if (user == null || user.EmailConfirmationToken != token)
             {
                 return BadRequest("Invalid confirmation token");
             }
-            user.EmailConfirmed = model.EmailConfirmed;
-            user.EmailConfirmationToken = null;
 
-            await _accountService.UpdateAfterRegisterAsync(user.Id, user);
-
-            _logger.LogInformation("Email successfully confirmed");
-            return Ok(new { message = "Email successfully confirmed", userId = user.Id });
+            await _userRepository.SetConfirmationEmailAsync(user.Id, user);
+            var response = new SuccessResponse("Email confirmed successfully!");
+            _logger.LogInformation(response.ToString());
+            return Ok(response);
         }
 
-        [Authorize]
+        /*[Authorize]
         [HttpPut("update/{id}")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> OnUpdate(int id, [FromForm] UpdateUserDto model)
@@ -106,6 +115,6 @@ namespace BackendChat.Controllers
         {
             _accountService.RefreshToken(model);
             return Ok(model);
-        }
+        }*/
     }
 }
