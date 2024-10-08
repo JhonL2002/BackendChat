@@ -7,20 +7,20 @@ using BackendChat.Responses;
 using BackendChat.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace BackendChat.Repositories
+namespace BackendChat.Repositories.UserAccount
 {
     public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _dbContext;
         private readonly ILogger<IUserRepository> _logger;
         private readonly ISendEmailService _sendEmail;
-        private readonly IBlobImageService _blobImageService;
+        private readonly IUploadImageService _blobImageService;
 
         public UserRepository(
             AppDbContext dbContext,
             ILogger<IUserRepository> logger,
             ISendEmailService sendEmail,
-            IBlobImageService blobImageService)
+            IUploadImageService blobImageService)
         {
             _dbContext = dbContext;
             _logger = logger;

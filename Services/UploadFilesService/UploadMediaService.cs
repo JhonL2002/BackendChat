@@ -1,14 +1,15 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
+using BackendChat.Services.Interfaces;
 
-namespace BackendChat.Services.BlobStorage
+namespace BackendChat.Services.UploadFilesServices
 {
-    public class BlobMediaService
+    public class UploadMediaService : IUploadMediaService
     {
         private readonly IConfiguration _configuration;
         private readonly string[] permittedExtensionsToChat = { ".jpg", ".jpeg", ".png", ".mp4", ".mp3", ".wav", ".pdf", ".docx", ".xlsx", ".zip" };
 
-        public BlobMediaService(IConfiguration configuration)
+        public UploadMediaService(IConfiguration configuration)
         {
             _configuration = configuration;
         }
@@ -57,7 +58,7 @@ namespace BackendChat.Services.BlobStorage
         }
 
         //New method to regenerate SAS URL
-        public async Task<string> RegenerateSasUri(string blobName)
+        public async Task<string> RegenerateSasUriAsync(string blobName)
         {
             BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
             BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
@@ -72,7 +73,7 @@ namespace BackendChat.Services.BlobStorage
             throw new InvalidOperationException("Blob not found.");
         }
 
-        private string GenerateBlobSasUri(BlobClient blobClient, TimeSpan duration)
+        public string GenerateBlobSasUri(BlobClient blobClient, TimeSpan duration)
         {
             //Define SAS permissions and expiry time
             var sasBuilder = new BlobSasBuilder()
@@ -92,7 +93,7 @@ namespace BackendChat.Services.BlobStorage
             return sasUri.ToString();
         }
 
-        private long GetMaxFileSize(string extension)
+        public long GetMaxFileSize(string extension)
         {
             switch (extension)
             {

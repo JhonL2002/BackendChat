@@ -1,6 +1,6 @@
 ﻿using BackendChat.Data;
 using BackendChat.Models;
-using BackendChat.Services.ChatServices;
+using BackendChat.Repositories.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -10,15 +10,17 @@ namespace BackendChat.Hubs
 {
     public class ChatHub : Hub
     {
-        private readonly ManageGroupService _manageGroupService;
+        private readonly IGroupRepository _groupRepository;
         private readonly AppDbContext _appDbContext;
-        private readonly UserContextService _userConnectionService;
+        private readonly IUserConnectionContext _userConnectionContext;
 
-        public ChatHub(ManageGroupService manageGroupService, AppDbContext appDbContext, UserContextService userConnectionService)
+        public ChatHub(IGroupRepository groupRepository,
+            AppDbContext appDbContext,
+            IUserConnectionContext userConnectionContext)
         {
-            _manageGroupService = manageGroupService;
+            _groupRepository = groupRepository;
             _appDbContext = appDbContext;
-            _userConnectionService = userConnectionService;
+            _userConnectionContext = userConnectionContext;
         }
 
         //Method to create a group
@@ -44,7 +46,7 @@ namespace BackendChat.Hubs
             }
 
             //Get all user connections from service
-            var connectionIds = await _userConnectionService.GetUserConnectionsAsync(userId);
+            var connectionIds = await _userConnectionContext.GetUserConnectionsAsync(userId);
             if (connectionIds == null || !connectionIds.Any())
             {
                 await Clients.Caller.SendAsync("Error", "No active connections found for the user");
@@ -107,8 +109,20 @@ namespace BackendChat.Hubs
                 .FirstOrDefaultAsync(uc => uc.ConnectionId == connectionId && uc.UserId == Convert.ToInt32(userId));
             if (userConnection != null)
             {
-                _appDbContext.UserConnections.Remove(userConnection);
-                await _appDbContext.SaveChangesAsync();
+                try
+                {
+                    _appDbContext.UserConnections.Remove(userConnection);
+                    await _appDbContext.SaveChangesAsync();
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine($"Connection {connectionId} removed for user {userId}");
+
+                }
+                catch (Exception ex)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine($"Error removing connection {connectionId}: {ex.Message}");
+                }
+                
             }
         }
     }

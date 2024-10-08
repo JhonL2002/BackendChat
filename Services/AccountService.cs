@@ -1,7 +1,7 @@
 ﻿using BackendChat.Data;
 using BackendChat.DTOs;
 using BackendChat.Models;
-using BackendChat.Services.BlobStorage;
+using BackendChat.Services.UploadFilesServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -15,11 +15,11 @@ namespace BackendChat.Services
         private readonly AppDbContext _appDbContext;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AccountService> _logger;
-        private readonly BlobImageService _blobService;
+        private readonly UploadImageService _blobService;
         public AccountService(AppDbContext appDbContext,
             IConfiguration configuration,
             ILogger<AccountService> logger,
-            BlobImageService blobService
+            UploadImageService blobService
         )
         {
             _appDbContext = appDbContext;

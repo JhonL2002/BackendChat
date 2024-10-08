@@ -1,6 +1,6 @@
 ﻿namespace BackendChat.Services.Interfaces
 {
-    public interface IBlobImageService
+    public interface IUploadImageService
     {
         Task<string> UploadProfileImageAsync(IFormFile imageStream);
         string GetDefaultImageUrl();

@@ -1,14 +1,14 @@
 ﻿using Azure.Storage.Blobs;
 using BackendChat.Services.Interfaces;
 
-namespace BackendChat.Services.BlobStorage
+namespace BackendChat.Services.UploadFilesServices
 {
-    public class BlobImageService : IBlobImageService
+    public class UploadImageService : IUploadImageService
     {
         private readonly IConfiguration _configuration;
         private readonly string[] permittedExtensionsToProfile = { ".jpg", ".jpeg", ".png" };
         private readonly string[] permittedMimeTypesToProfile = { "image/jpeg", "image/png" };
-        public BlobImageService(IConfiguration configuration)
+        public UploadImageService(IConfiguration configuration)
         {
             _configuration = configuration;
         }

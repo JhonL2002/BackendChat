@@ -1,15 +1,9 @@
 ﻿using BackendChat.DTOs;
-using BackendChat.Models;
 using BackendChat.Repositories.Interfaces;
 using BackendChat.Responses;
-using BackendChat.Responses.BackendChat.Responses;
-using BackendChat.Services;
-using BackendChat.Services.BlobStorage;
 using BackendChat.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 
 namespace BackendChat.Controllers
 {
@@ -18,13 +12,13 @@ namespace BackendChat.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
-        private readonly IBlobImageService _blobService;
+        private readonly IUploadImageService _blobService;
         private readonly ILogger<AccountController> _logger;
         private readonly ILoginRepository _loginRepository;
 
         public AccountController(
             IUserRepository userRepository,
-            IBlobImageService blobImageService,
+            IUploadImageService blobImageService,
             ILogger<AccountController> logger,
             ILoginRepository loginRepository)
         {
@@ -56,9 +50,8 @@ namespace BackendChat.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError(ex, "An error occurred while registering the user.");
                 return StatusCode(500, "Internal server error.");
             }
             
@@ -66,22 +59,27 @@ namespace BackendChat.Controllers
 
         [HttpPost("confirm-email")]
         [AllowAnonymous]
-        [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> ConfirmEmail(string userNickname, string token, ConfirmEmailDto model)
         {
-            var user = await _userRepository.GetUserByNicknameAsync(userNickname);
-            if (user == null || user.EmailConfirmationToken != token)
+            try
             {
-                var failureResponse = new FailureResponse("Invalid confirmation token");
-                return BadRequest(failureResponse);
-            }
+                var user = await _userRepository.GetUserByNicknameAsync(userNickname);
+                if (user == null || user.EmailConfirmationToken != token)
+                {
+                    return BadRequest();
+                }
 
-            await _userRepository.SetConfirmationEmailAsync(user.Id, user);
-            var response = new SuccessResponse("Email confirmed successfully!");
-            _logger.LogInformation(response.ToString());
-            return Ok(response);
+                await _userRepository.SetConfirmationEmailAsync(user.Id, user);
+                return Ok();
+            }
+            catch(Exception)
+            {
+                return StatusCode(500, "Internal server error.");
+            }
+            
         }
 
         /*[Authorize]
@@ -106,19 +104,25 @@ namespace BackendChat.Controllers
 
         [HttpPost("login")]
         [AllowAnonymous]
-        [ProducesResponseType(typeof(SuccessResponse), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(FailureResponse), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> OnLogin(LoginDTO model)
         {
-            var token = await _loginRepository.LoginAsync(model);
-            if (token == null)
+            try
             {
-                var failureResponse = new FailureResponse("Unauthorized access, please verify credentials");
-                return Unauthorized(failureResponse);
+                var token = await _loginRepository.LoginAsync(model);
+                if (token == null)
+                {
+                    return Unauthorized();
+                }
+                return Ok(new { Token = token });
             }
-            var successResponse = new SuccessResponse("Loged in successfully!");
-            return Ok(successResponse);
+            catch (Exception)
+            {
+                return StatusCode(500, "Internal server error.");
+            }
+
         }
 
         /*[HttpPost("refresh-token")]

@@ -4,16 +4,17 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
-using BackendChat.Services.BlobStorage;
+using BackendChat.Services.UploadFilesServices;
 using BackendChat.Hubs;
-using BackendChat.Services.ChatServices;
 using BackendChat.Repositories.Interfaces;
-using BackendChat.Repositories;
 using BackendChat.Services.Interfaces;
 using BackendChat.Services.MailJet;
 using BackendChat.Services.SendEmail;
 using BackendChat.Helpers.Interfaces;
 using BackendChat.Helpers;
+using BackendChat.Repositories.UserAccount;
+using BackendChat.Repositories.ChatRepository;
+using BackendChat.Repositories.UserConnections;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,11 +43,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
 builder.Services.AddScoped<ILoginRepository,  LoginRepository>();
 builder.Services.AddScoped<IAdminTokenCode, AdminTokenCode>();
-//builder.Services.AddScoped<ChatMessageService>();
-builder.Services.AddScoped<ManageGroupService>();
-builder.Services.AddScoped<UserContextService>();
-builder.Services.AddScoped<IBlobImageService, BlobImageService>();
-builder.Services.AddScoped<BlobMediaService>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+builder.Services.AddScoped<IGroupRepository, GroupRepository>();
+builder.Services.AddScoped<IUploadImageService, UploadImageService>();
+builder.Services.AddScoped<IUploadMediaService, UploadMediaService>();
+builder.Services.AddScoped<IUserConnectionContext, UserConnectionContext>();
 
 //Configure the JWT authentication
 builder.Services.AddAuthentication(options =>

@@ -2,7 +2,7 @@
 using BackendChat.Helpers.Interfaces;
 using BackendChat.Repositories.Interfaces;
 
-namespace BackendChat.Repositories
+namespace BackendChat.Repositories.UserAccount
 {
     public class LoginRepository : ILoginRepository
     {

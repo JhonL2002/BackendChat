@@ -1,4 +1,4 @@
-﻿namespace BackendChat.Services.ChatServices
+﻿namespace BackendChat.Repositories.ChatRepository
 {
     public enum ChatTypeEnum
     {

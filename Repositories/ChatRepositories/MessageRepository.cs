@@ -1,23 +1,24 @@
 ﻿using BackendChat.Data;
-/*using BackendChat.DTOs;
+using BackendChat.DTOs;
 using BackendChat.Models;
+using BackendChat.Repositories.Interfaces;
 using BackendChat.Responses;
-using BackendChat.Services.BlobStorage;
-using BackendChat.Services.EmailSender;
+using BackendChat.Services.UploadFilesServices;
+using BackendChat.Services.Interfaces;
 using Mailjet.Client.Resources;
 using Microsoft.EntityFrameworkCore;
 
-namespace BackendChat.Services.ChatServices
+namespace BackendChat.Repositories.ChatRepository
 {
-    public class ChatMessageService
+    public class MessageRepository : IMessageRepository
     {
         private readonly AppDbContext _appDbContext;
-        private readonly ILogger<ChatMessageService> _logger;
-        private readonly BlobMediaService _blobMediaService;
-        public ChatMessageService(
+        private readonly ILogger<IMessageRepository> _logger;
+        private readonly IUploadMediaService _blobMediaService;
+        public MessageRepository(
             AppDbContext appDbContext,
-            ILogger<ChatMessageService> logger,
-            BlobMediaService blobMediaService
+            ILogger<IMessageRepository> logger,
+            IUploadMediaService blobMediaService
             )
         {
             _appDbContext = appDbContext;
@@ -41,7 +42,7 @@ namespace BackendChat.Services.ChatServices
             {
                 model.MediaUrl = null;
             }
-            //Create a response to deserialize in client
+            //Convert the Entity into a DTO to send data at client
             var newMessage = new ChatMessage
             {
                 UserId = model.UserId,
@@ -55,7 +56,7 @@ namespace BackendChat.Services.ChatServices
             _logger.LogInformation("**** Success: Message saved successfully! ****");
         }
 
-        public async Task<List<ChatMediaResponse>> GetMessagesWithUpdatedSaSUrlsAsync(int chatId, int? lastMessageId = null, int pageSize = 6)
+        public async Task<List<ChatMediaResponse>> GetMessagesAsync(int chatId, int? lastMessageId = null, int pageSize = 6)
         {
             //Verify if chatId exists
             var chatExists = await _appDbContext.Chats.AnyAsync(c => c.ChatId == chatId);
@@ -118,7 +119,7 @@ namespace BackendChat.Services.ChatServices
                 {
                     var blobName = ExtractBlobNameFromUrl(message.MediaUrl);
 
-                    var newSasUrl = await _blobMediaService.RegenerateSasUri(blobName);
+                    var newSasUrl = await _blobMediaService.RegenerateSasUriAsync(blobName);
                     response.MediaUrl = newSasUrl;
                 }
                 else
@@ -134,10 +135,9 @@ namespace BackendChat.Services.ChatServices
         }
 
         //Extract the name of file to re-build a new SAS Url
-        private string ExtractBlobNameFromUrl(string url)
+        public string ExtractBlobNameFromUrl(string url)
         {
             return new Uri(url).Segments.Last();
         }
     }
 }
-*/
