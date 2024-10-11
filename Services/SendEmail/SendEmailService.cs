@@ -12,13 +12,32 @@ namespace BackendChat.Services.SendEmail
             _configuration = configuration;
             _mailJet = mailJet;
         }
-        public async Task SendConfirmationEmailAsync(RegisterDTO user)
+        public async Task SendConfirmationEmailAsync<T>(T model)
         {
+            //Verify that model does not null
+            if (model == null)
+            {
+                throw new ArgumentNullException(nameof(model), "Model cannot be null");
+            }
+
+            //Use reflection to get required properties
+            var emailProperty = typeof(T).GetProperty("Email")?.GetValue(model)?.ToString();
+            var nicknameProperty = typeof(T).GetProperty("Nickname")?.GetValue(model)?.ToString();
+            var tokenProperty = typeof(T).GetProperty("EmailConfirmationToken")?.GetValue(model)?.ToString();
+
+            //Verify that necessary properties does not be null
+            if (string.IsNullOrEmpty(emailProperty) || string.IsNullOrEmpty(nicknameProperty) || string.IsNullOrEmpty(tokenProperty))
+            {
+                throw new InvalidOperationException("Model must contain properties such as Email, Nickname and EmailConfirmationToken.");
+            }
+
             var baseUrl = _configuration["AppSettings:BaseUrl"];
-            var encodedToken = Uri.EscapeDataString(user.EmailConfirmationToken);
-            var confirmationLink = $"{baseUrl}/confirm-email?userNickname={user.Nickname}&token={encodedToken}";
+            var encodedToken = Uri.EscapeDataString(tokenProperty);
+            var confirmationLink = $"{baseUrl}/confirm-email?userNickname={nicknameProperty}&token={encodedToken}";
             string message = $"Please, confirm your account here {confirmationLink}";
-            await _mailJet.SendEmailAsync(_configuration["EmailCredentials:FromEmail"]!, user.Email, "Confirm your email", message);
+
+            //Send email
+            await _mailJet.SendEmailAsync(_configuration["EmailCredentials:FromEmail"]!, emailProperty, "Confirm your email", message);
 
         }
     }

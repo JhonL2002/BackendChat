@@ -82,25 +82,27 @@ namespace BackendChat.Controllers
             
         }
 
-        /*[Authorize]
-        [HttpPut("update/{id}")]
+        [Authorize]
+        [HttpGet("get-user")]
+        public async Task<IActionResult> GetUser()
+        {
+            var userDTO = await _userRepository.GetUserDataAsync();
+            return Ok(userDTO);
+        }
+
+        [Authorize]
+        [HttpPut("update-user")]
         [Consumes("multipart/form-data")]
-        public async Task<IActionResult> OnUpdate(int id, [FromForm] UpdateUserDto model)
+        public async Task<IActionResult> OnUpdate([FromForm] UpdateUserDTO model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (model.ProfilePicture != null)
-            {
-                var profilePictureUrl = await _blobService.UploadProfileImageAsync(model.ProfilePicture);
-                model.ProfilePictureUrl = profilePictureUrl;
-            }
-
-            await _accountService.UpdateAsync(id, model);
+            await _userRepository.UpdateAsync(model);
             return NoContent();
-        }*/
+        }
 
         [HttpPost("login")]
         [AllowAnonymous]

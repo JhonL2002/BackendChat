@@ -2,7 +2,7 @@
 
 namespace BackendChat.DTOs
 {
-    public class UpdateUserDto
+    public class UpdateUserDTO
     {
         [Required]
         [RegularExpression("^[A-Za-z]+$", ErrorMessage = "First Name must contain letters")]
@@ -24,10 +24,14 @@ namespace BackendChat.DTOs
         [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
         public DateTime DOB { get; set; }
 
+        [Required]
+        [DataType(DataType.EmailAddress)]
+        public string Email { get; set; } = string.Empty;
+
         public IFormFile? ProfilePicture { get; set; }
         public string? ProfilePictureUrl { get; set; }
 
-        public bool EmailConfirmed { get; set; } = false;
+        public bool? EmailConfirmed { get; set; }
 
         public string? EmailConfirmationToken { get; set; } = string.Empty;
 

@@ -10,5 +10,7 @@ namespace BackendChat.Repositories.Interfaces
         Task<AppUser> GetUser(string email);
         Task SetConfirmationEmailAsync(int id, AppUser model);
         Task<AppUser?> GetUserByNicknameAsync(string nickName);
+        Task UpdateAsync(UpdateUserDTO model);
+        Task<UpdateUserDTO> GetUserDataAsync();
     }
 }

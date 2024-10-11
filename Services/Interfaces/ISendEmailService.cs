@@ -4,6 +4,6 @@ namespace BackendChat.Services.Interfaces
 {
     public interface ISendEmailService
     {
-        Task SendConfirmationEmailAsync(RegisterDTO user);
+        Task SendConfirmationEmailAsync<T>(T model);
     }
 }
