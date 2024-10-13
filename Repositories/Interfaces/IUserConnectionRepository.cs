@@ -1,6 +1,6 @@
 ﻿namespace BackendChat.Repositories.Interfaces
 {
-    public interface IUserConnectionContext
+    public interface IUserConnectionRepository
     {
         Task<IEnumerable<string>> GetUserConnectionsAsync(string userId);
     }

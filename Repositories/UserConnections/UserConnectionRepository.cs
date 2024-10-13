@@ -4,10 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BackendChat.Repositories.UserConnections
 {
-    public class UserConnectionContext : IUserConnectionContext
+    public class UserConnectionRepository : IUserConnectionRepository
     {
         private readonly AppDbContext _dbContext;
-        public UserConnectionContext(AppDbContext appDbContext)
+        public UserConnectionRepository(AppDbContext appDbContext)
         {
             _dbContext = appDbContext;
         }

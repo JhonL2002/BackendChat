@@ -6,8 +6,8 @@ namespace BackendChat.Services.SendEmail
     public class SendEmailService : ISendEmailService
     {
         private readonly IConfiguration _configuration;
-        private readonly IMailJet _mailJet;
-        public SendEmailService(IConfiguration configuration, IMailJet mailJet)
+        private readonly IClientEmail _mailJet;
+        public SendEmailService(IConfiguration configuration, IClientEmail mailJet)
         {
             _configuration = configuration;
             _mailJet = mailJet;

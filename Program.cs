@@ -15,6 +15,9 @@ using BackendChat.Helpers;
 using BackendChat.Repositories.UserAccount;
 using BackendChat.Repositories.ChatRepository;
 using BackendChat.Repositories.UserConnections;
+using BackendChat.Repositories.AccountRepositories;
+using BackendChat.Strategies.Implementations;
+using BackendChat.Strategies.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,7 +41,7 @@ var connection = conStrBuilder.ConnectionString;
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IMailJet, MailJet>();
+builder.Services.AddScoped<IClientEmail, MailJet>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
 builder.Services.AddScoped<ILoginRepository,  LoginRepository>();
@@ -48,7 +51,11 @@ builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IUploadImageService, UploadImageService>();
 builder.Services.AddScoped<IUploadMediaService, UploadMediaService>();
-builder.Services.AddScoped<IUserConnectionContext, UserConnectionContext>();
+builder.Services.AddScoped<IUserConnectionRepository, UserConnectionRepository>();
+builder.Services.AddScoped<IGetUserActions, GetUserActions>();
+builder.Services.AddScoped<IUserUpdateStrategy, EmailUpdateStrategy>();
+builder.Services.AddScoped<IUserUpdateStrategy, NicknameUpdateStrategy>();
+builder.Services.AddScoped<IUserUpdateStrategy, ProfilePictureUpdateStrategy>();
 
 //Configure the JWT authentication
 builder.Services.AddAuthentication(options =>
