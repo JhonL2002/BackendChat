@@ -1,4 +1,5 @@
 ﻿using BackendChat.DTOs;
+using BackendChat.Repositories.AccountRepositories;
 using BackendChat.Repositories.Interfaces;
 using BackendChat.Responses;
 using BackendChat.Services.Interfaces;
@@ -15,17 +16,20 @@ namespace BackendChat.Controllers
         private readonly IUploadImageService _blobService;
         private readonly ILogger<AccountController> _logger;
         private readonly ILoginRepository _loginRepository;
+        private readonly IGetUserActions _getUserActions;
 
         public AccountController(
             IUserRepository userRepository,
             IUploadImageService blobImageService,
             ILogger<AccountController> logger,
-            ILoginRepository loginRepository)
+            ILoginRepository loginRepository,
+            IGetUserActions getUserActions)
         {
             _userRepository = userRepository;
             _blobService = blobImageService;
             _logger = logger;
             _loginRepository = loginRepository;
+            _getUserActions = getUserActions;
         }
 
         [HttpPost("register")]
@@ -66,7 +70,7 @@ namespace BackendChat.Controllers
         {
             try
             {
-                var user = await _userRepository.GetUserByNicknameAsync(userNickname);
+                var user = await _getUserActions.GetUserByNicknameAsync(userNickname);
                 if (user == null || user.EmailConfirmationToken != token)
                 {
                     return BadRequest();

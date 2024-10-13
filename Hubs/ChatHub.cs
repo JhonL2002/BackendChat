@@ -12,11 +12,11 @@ namespace BackendChat.Hubs
     {
         private readonly IGroupRepository _groupRepository;
         private readonly AppDbContext _appDbContext;
-        private readonly IUserConnectionContext _userConnectionContext;
+        private readonly IUserConnectionRepository _userConnectionContext;
 
         public ChatHub(IGroupRepository groupRepository,
             AppDbContext appDbContext,
-            IUserConnectionContext userConnectionContext)
+            IUserConnectionRepository userConnectionContext)
         {
             _groupRepository = groupRepository;
             _appDbContext = appDbContext;

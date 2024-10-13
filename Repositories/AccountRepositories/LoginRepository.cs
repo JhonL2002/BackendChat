@@ -1,5 +1,6 @@
 ﻿using BackendChat.DTOs;
 using BackendChat.Helpers.Interfaces;
+using BackendChat.Repositories.AccountRepositories;
 using BackendChat.Repositories.Interfaces;
 
 namespace BackendChat.Repositories.UserAccount
@@ -9,15 +10,20 @@ namespace BackendChat.Repositories.UserAccount
         private readonly IUserRepository _userRepository;
         private readonly ILogger<ILoginRepository> _logger;
         private readonly IAdminTokenCode _adminTokenCode;
-        public LoginRepository(IUserRepository userRepository, ILogger<ILoginRepository> logger, IAdminTokenCode adminTokenCode)
+        private readonly IGetUserActions _getUserActions;
+        public LoginRepository(IUserRepository userRepository,
+            ILogger<ILoginRepository> logger,
+            IAdminTokenCode adminTokenCode,
+            IGetUserActions getUserActions)
         {
             _userRepository = userRepository;
             _logger = logger;
             _adminTokenCode = adminTokenCode;
+            _getUserActions = getUserActions;
         }
         public async Task<string?> LoginAsync(LoginDTO model)
         {
-            var finduser = await _userRepository.GetUser(model.Email);
+            var finduser = await _getUserActions.GetUserByEmailAsync(model.Email);
             if (finduser == null)
             {
                 _logger.LogError("**** User not found! ****");

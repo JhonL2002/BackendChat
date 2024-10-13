@@ -5,12 +5,12 @@ using Newtonsoft.Json.Linq;
 
 namespace BackendChat.Services.MailJet
 {
-    public class MailJet : IMailJet
+    public class MailJet : IClientEmail
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<IMailJet> _logger;
+        private readonly ILogger<IClientEmail> _logger;
 
-        public MailJet(IConfiguration configuration, ILogger<IMailJet> logger)
+        public MailJet(IConfiguration configuration, ILogger<IClientEmail> logger)
         {
             _configuration = configuration;
             _logger = logger;
