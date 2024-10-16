@@ -1,29 +1,34 @@
 ﻿using Azure.Storage.Blobs;
+using Azure.Storage.Sas;
 using BackendChat.Services.Interfaces;
 
 namespace BackendChat.Services.UploadFilesServices
 {
-    public class UploadImageService : IUploadImageService
+    public class UploadImageService<T> : IUploadMediaService<T>
     {
         private readonly IConfiguration _configuration;
+        private readonly IGenerateSASUriService _generateSASUriService;
+        private readonly IGetBlobActionsService _getBlobActionsService;
         private readonly string[] permittedExtensionsToProfile = { ".jpg", ".jpeg", ".png" };
         private readonly string[] permittedMimeTypesToProfile = { "image/jpeg", "image/png" };
-        public UploadImageService(IConfiguration configuration)
+        public UploadImageService(IConfiguration configuration, IGenerateSASUriService generateSASUriService, IGetBlobActionsService getBlobActionsService)
         {
             _configuration = configuration;
+            _generateSASUriService = generateSASUriService;
+            _getBlobActionsService = getBlobActionsService;
         }
 
-        public async Task<string> UploadProfileImageAsync(IFormFile imageStream)
+        public async Task<string> UploadMediaAsync(IFormFile file)
         {
-            if (imageStream == null || imageStream.Length == 0)
+            if (file == null || file.Length == 0)
             {
                 //No image uploaded, return the URL of the default image
-                return GetDefaultImageUrl();
+                return _getBlobActionsService.GetDefaultImageUrl(_configuration["AzureBlob:DefaultImage"]!, false);
             }
 
             //Validate file extension
-            var extension = Path.GetExtension(imageStream.FileName).ToLowerInvariant();
-            if (string.IsNullOrEmpty(imageStream.ContentType) || !permittedMimeTypesToProfile.Contains(imageStream.ContentType))
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(file.ContentType) || !permittedMimeTypesToProfile.Contains(file.ContentType))
             {
                 if (Array.IndexOf(permittedExtensionsToProfile, extension) < 0)
                 {
@@ -32,30 +37,18 @@ namespace BackendChat.Services.UploadFilesServices
             }
 
             //Validate image size (200 KB = 204800 bytes)
-            if (imageStream.Length > 204800)
+            if (file.Length > 204800)
             {
                 throw new InvalidOperationException("The image size exceeds the limit of 200 KB.");
             }
 
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
-            await containerClient.CreateIfNotExistsAsync();
             string blobName = "image" + Guid.NewGuid().ToString();
-            BlobClient blobClient = containerClient.GetBlobClient(blobName);
-            using (var stream = imageStream.OpenReadStream())
-            {
-                await blobClient.UploadAsync(stream, overwrite: true);
-            }
 
-            return blobClient.Uri.ToString();
-        }
+            await using var stream = file.OpenReadStream();
 
-        public string GetDefaultImageUrl()
-        {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
-            BlobClient defaultBlobClient = containerClient.GetBlobClient(_configuration["AzureBlob:DefaultImage"]);
-            return defaultBlobClient.Uri.ToString();
+            var sasUri = await _generateSASUriService.UploadAndGenerateSasUriAsync(blobName, stream, TimeSpan.FromHours(1), false);
+
+            return sasUri;
         }
     }
 }

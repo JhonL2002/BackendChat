@@ -13,14 +13,14 @@ namespace BackendChat.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IUserRepository _userRepository;
-        private readonly IUploadImageService _blobService;
+        private readonly IGetBlobActionsService _blobService;
         private readonly ILogger<AccountController> _logger;
         private readonly ILoginRepository _loginRepository;
         private readonly IGetUserActions _getUserActions;
 
         public AccountController(
             IUserRepository userRepository,
-            IUploadImageService blobImageService,
+            IGetBlobActionsService blobImageService,
             ILogger<AccountController> logger,
             ILoginRepository loginRepository,
             IGetUserActions getUserActions)

@@ -2,15 +2,10 @@
 using BackendChat.DTOs;
 using BackendChat.Helpers;
 using BackendChat.Models;
-using BackendChat.Repositories.AccountRepositories;
 using BackendChat.Repositories.Interfaces;
-using BackendChat.Responses;
 using BackendChat.Services.Interfaces;
 using BackendChat.Strategies.Implementations;
 using BackendChat.Strategies.Interfaces;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace BackendChat.Repositories.UserAccount
 {
@@ -19,14 +14,14 @@ namespace BackendChat.Repositories.UserAccount
         private readonly AppDbContext _dbContext;
         private readonly ILogger<IUserRepository> _logger;
         private readonly ISendEmailService _sendEmail;
-        private readonly IUploadImageService _blobImageService;
+        private readonly IUploadMediaService<IUserRepository> _blobImageService;
         private readonly IGetUserActions _getUserActions;
 
         public UserRepository(
             AppDbContext dbContext,
             ILogger<IUserRepository> logger,
             ISendEmailService sendEmail,
-            IUploadImageService blobImageService,
+            IUploadMediaService<IUserRepository> blobImageService,
             IGetUserActions getUserActions)
         {
             _dbContext = dbContext;
@@ -67,16 +62,7 @@ namespace BackendChat.Repositories.UserAccount
                 throw new InvalidOperationException("User already exists");
             }
 
-            //Upload an image and assign an URL
-            if (model.ProfilePicture != null)
-            {
-                model.ProfilePictureUrl = await _blobImageService.UploadProfileImageAsync(model.ProfilePicture);
-            }
-            else
-            {
-                model.ProfilePictureUrl = _blobImageService.GetDefaultImageUrl();
-            }
-
+            model.ProfilePictureUrl = await _blobImageService.UploadMediaAsync(model.ProfilePicture);
             model.EmailConfirmationToken = GenerateGuidCode.GenerateGuidToken();
 
             _dbContext.Users.Add(

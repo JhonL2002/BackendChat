@@ -18,6 +18,9 @@ using BackendChat.Repositories.UserConnections;
 using BackendChat.Repositories.AccountRepositories;
 using BackendChat.Strategies.Implementations;
 using BackendChat.Strategies.Interfaces;
+using System.Text.Json;
+using BackendChat.Services.GenerateSASUriService;
+using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,17 +33,42 @@ builder.WebHost.ConfigureKestrel(options =>
     });
 });
 
+//Configure JsonSerializerOptions
+var jsonSerializerOptions = new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    PropertyNameCaseInsensitive = true
+};
+
 //Configure a password secret using an environment variable
 var conStrBuilder = new SqlConnectionStringBuilder(
         builder.Configuration.GetConnectionString("SQLString"));
 conStrBuilder.Password = builder.Configuration["Chat:DbPassword"];
 var connection = conStrBuilder.ConnectionString;
 
+//Configure connection string and container names (to implement IGenerateSASUriService)
+string connectionString = builder.Configuration["AzureBlob:ConnectionString"]!;
+string containerName1 = builder.Configuration["AzureBlob:ContainerName1"]!;
+string containerName2 = builder.Configuration["AzureBlob:ContainerName2"]!;
+
+
 // Add services to the container.
 
-builder.Services.AddControllers();
+//Add JsonSerializeOptions to allow use CamelCase and Name Case Insensitive
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = jsonSerializerOptions.PropertyNamingPolicy;
+        options.JsonSerializerOptions.PropertyNameCaseInsensitive = jsonSerializerOptions.PropertyNameCaseInsensitive;
+    });
+
+//Add SignalR service
 builder.Services.AddSignalR();
+
+//Add HttpContextAccessor to allow work with current user data
 builder.Services.AddHttpContextAccessor();
+
+//Add interfaces to work in app
 builder.Services.AddScoped<IClientEmail, MailJet>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISendEmailService, SendEmailService>();
@@ -49,13 +77,21 @@ builder.Services.AddScoped<IAdminTokenCode, AdminTokenCode>();
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
 builder.Services.AddScoped<IGroupRepository, GroupRepository>();
-builder.Services.AddScoped<IUploadImageService, UploadImageService>();
-builder.Services.AddScoped<IUploadMediaService, UploadMediaService>();
+builder.Services.AddScoped<IUploadMediaService<IMessageRepository>, UploadMediaService<IMessageRepository>>();
+builder.Services.AddScoped<IUploadMediaService<IUserRepository>, UploadImageService<IUserRepository>>();
 builder.Services.AddScoped<IUserConnectionRepository, UserConnectionRepository>();
 builder.Services.AddScoped<IGetUserActions, GetUserActions>();
 builder.Services.AddScoped<IUserUpdateStrategy, EmailUpdateStrategy>();
 builder.Services.AddScoped<IUserUpdateStrategy, NicknameUpdateStrategy>();
 builder.Services.AddScoped<IUserUpdateStrategy, ProfilePictureUpdateStrategy>();
+
+//Register JsonSerializerOptions as singleton
+builder.Services.AddSingleton(jsonSerializerOptions);
+
+//Register IGenerateSASUriService as singleton
+var generateSasService = new GenerateSASUriService(connectionString, containerName1, containerName2);
+builder.Services.AddSingleton<IGenerateSASUriService>(generateSasService);
+builder.Services.AddSingleton<IGetBlobActionsService>(generateSasService);
 
 //Configure the JWT authentication
 builder.Services.AddAuthentication(options =>
@@ -85,6 +121,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseSqlServer(connection);
 });
+
 
 var app = builder.Build();
 

@@ -14,16 +14,19 @@ namespace BackendChat.Repositories.ChatRepository
     {
         private readonly AppDbContext _appDbContext;
         private readonly ILogger<IMessageRepository> _logger;
-        private readonly IUploadMediaService _blobMediaService;
+        private readonly IUploadMediaService<IMessageRepository> _blobMediaService;
+        private readonly IGenerateSASUriService _generateSASUriService;
         public MessageRepository(
             AppDbContext appDbContext,
             ILogger<IMessageRepository> logger,
-            IUploadMediaService blobMediaService
+            IUploadMediaService<IMessageRepository> blobMediaService,
+            IGenerateSASUriService generateSASUriService
             )
         {
             _appDbContext = appDbContext;
             _logger = logger;
             _blobMediaService = blobMediaService;
+            _generateSASUriService = generateSASUriService;
 
         }
         public async Task RegisterMessageAsync(ChatMessageDTO model)
@@ -119,7 +122,7 @@ namespace BackendChat.Repositories.ChatRepository
                 {
                     var blobName = ExtractBlobNameFromUrl(message.MediaUrl);
 
-                    var newSasUrl = await _blobMediaService.RegenerateSasUriAsync(blobName);
+                    var newSasUrl = await _generateSASUriService.RegenerateSasUriAsync(blobName, true);
                     response.MediaUrl = newSasUrl;
                 }
                 else

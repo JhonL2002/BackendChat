@@ -4,14 +4,14 @@ using BackendChat.Services.Interfaces;
 
 namespace BackendChat.Services.UploadFilesServices
 {
-    public class UploadMediaService : IUploadMediaService
+    public class UploadMediaService<T> : IUploadMediaService<T>
     {
-        private readonly IConfiguration _configuration;
+        private readonly IGenerateSASUriService _generateSASUriService;
         private readonly string[] permittedExtensionsToChat = { ".jpg", ".jpeg", ".png", ".mp4", ".mp3", ".wav", ".pdf", ".docx", ".xlsx", ".zip" };
 
-        public UploadMediaService(IConfiguration configuration)
+        public UploadMediaService(IGenerateSASUriService generateSASUriService)
         {
-            _configuration = configuration;
+            _generateSASUriService = generateSASUriService;
         }
 
         public async Task<string> UploadMediaAsync(IFormFile file)
@@ -38,59 +38,15 @@ namespace BackendChat.Services.UploadFilesServices
                 throw new InvalidOperationException("The file size exceeds the limit of 200 KB.");
             }
 
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
-            await containerClient.CreateIfNotExistsAsync();
             string blobName = $"{Guid.NewGuid()}{extension}";
 
-            BlobClient blobClient = containerClient.GetBlobClient(blobName);
-            
             //Upload file to blob
-            using (var stream = file.OpenReadStream())
-            {
-                await blobClient.UploadAsync(stream, overwrite: true);
-            }
+            await using var stream = file.OpenReadStream();
 
             //Generate SAS URI with read permissions
-            var sasUri = GenerateBlobSasUri(blobClient, TimeSpan.FromHours(1));
+            var sasUri = await _generateSASUriService.UploadAndGenerateSasUriAsync(blobName, stream, TimeSpan.FromHours(1), true);
 
-            return sasUri.ToString();
-        }
-
-        //New method to regenerate SAS URL
-        public async Task<string> RegenerateSasUriAsync(string blobName)
-        {
-            BlobServiceClient blobServiceClient = new BlobServiceClient(_configuration["AzureBlob:ConnectionString"]);
-            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(_configuration["AzureBlob:ContainerName"]);
-            BlobClient blobClient = containerClient.GetBlobClient(blobName);
-
-            if (await blobClient.ExistsAsync())
-            {
-                //Create new SAS URI with readonly permissions
-                var sasUri = GenerateBlobSasUri(blobClient, TimeSpan.FromHours(1));
-                return sasUri;
-            }
-            throw new InvalidOperationException("Blob not found.");
-        }
-
-        public string GenerateBlobSasUri(BlobClient blobClient, TimeSpan duration)
-        {
-            //Define SAS permissions and expiry time
-            var sasBuilder = new BlobSasBuilder()
-            {
-                BlobContainerName = blobClient.BlobContainerName,
-                BlobName = blobClient.Name,
-                Resource = "b", // "b" stands for blob
-                ExpiresOn = DateTimeOffset.UtcNow.Add(duration) // SAS duration
-                
-            };
-
-            //Set permissions to read
-            sasBuilder.SetPermissions(BlobSasPermissions.Read);
-
-            //Generate the SAS URI
-            Uri sasUri = blobClient.GenerateSasUri(sasBuilder);
-            return sasUri.ToString();
+            return sasUri;
         }
 
         public long GetMaxFileSize(string extension)
