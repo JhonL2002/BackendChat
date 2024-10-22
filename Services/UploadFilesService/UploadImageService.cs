@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
+using BackendChat.Constants;
 using BackendChat.Services.Interfaces;
 
 namespace BackendChat.Services.UploadFilesServices
@@ -23,7 +24,7 @@ namespace BackendChat.Services.UploadFilesServices
             if (file == null || file.Length == 0)
             {
                 //No image uploaded, return the URL of the default image
-                return _getBlobActionsService.GetDefaultImageUrl(_configuration["AzureBlob:DefaultImage"]!, false);
+                return _getBlobActionsService.GetDefaultImageUrl(_configuration["AzureBlob:DefaultImage"]!, BlobContainerEnum.Container2);
             }
 
             //Validate file extension
@@ -46,7 +47,7 @@ namespace BackendChat.Services.UploadFilesServices
 
             await using var stream = file.OpenReadStream();
 
-            var sasUri = await _generateSASUriService.UploadAndGenerateSasUriAsync(blobName, stream, TimeSpan.FromHours(1), false);
+            var sasUri = await _generateSASUriService.UploadAndGenerateSasUriAsync(blobName, stream, TimeSpan.FromHours(1), BlobContainerEnum.Container2);
 
             return sasUri;
         }

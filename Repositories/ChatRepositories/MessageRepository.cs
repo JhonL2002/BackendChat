@@ -7,6 +7,7 @@ using BackendChat.Services.UploadFilesServices;
 using BackendChat.Services.Interfaces;
 using Mailjet.Client.Resources;
 using Microsoft.EntityFrameworkCore;
+using BackendChat.Constants;
 
 namespace BackendChat.Repositories.ChatRepository
 {
@@ -122,7 +123,7 @@ namespace BackendChat.Repositories.ChatRepository
                 {
                     var blobName = ExtractBlobNameFromUrl(message.MediaUrl);
 
-                    var newSasUrl = await _generateSASUriService.RegenerateSasUriAsync(blobName, true);
+                    var newSasUrl = await _generateSASUriService.RegenerateSasUriAsync(blobName, BlobContainerEnum.Container1);
                     response.MediaUrl = newSasUrl;
                 }
                 else

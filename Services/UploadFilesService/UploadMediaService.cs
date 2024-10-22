@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
+using BackendChat.Constants;
 using BackendChat.Services.Interfaces;
 
 namespace BackendChat.Services.UploadFilesServices
@@ -44,7 +45,7 @@ namespace BackendChat.Services.UploadFilesServices
             await using var stream = file.OpenReadStream();
 
             //Generate SAS URI with read permissions
-            var sasUri = await _generateSASUriService.UploadAndGenerateSasUriAsync(blobName, stream, TimeSpan.FromHours(1), true);
+            var sasUri = await _generateSASUriService.UploadAndGenerateSasUriAsync(blobName, stream, TimeSpan.FromHours(1), BlobContainerEnum.Container1);
 
             return sasUri;
         }
